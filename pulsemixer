@@ -1353,7 +1353,7 @@ class Screen():
                     self.display_submenu()
                     self.run_submenu()
                     continue
-            except (curses.error, IndexError) as e:
+            except (curses.error, IndexError, ValueError) as e:
                 self.screen.erase()
                 self.screen.addstr('Can you make it any bigger?\n')
                 self.screen.addstr(str(e))
