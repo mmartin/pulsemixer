@@ -687,6 +687,7 @@ class Pulse():
 
     def __init__(self, client_name='libpulse', server=None):
         self.ret = None
+        self.error = None
         self.operation = None
         self.action_done = False
         self.data = []
@@ -708,7 +709,7 @@ class Pulse():
 
         if pa_context_connect(self.context, server, 0, None) < 0:
             self.disconnect()
-            sys.exit("Failed to connect to pulseaudio daemon: Connection refused")
+            self.error = RuntimeError("Failed to connect to pulseaudio daemon: Connection refused")
         self.iterate()
 
     def unmute_stream(self, obj):
@@ -778,10 +779,10 @@ class Pulse():
         state = pa_context_get_state(c)
         if state == 4:
             self.complete_action()
-        elif state == 5:
-            sys.exit("Failed to connect to pulseaudio daemon: Connection refused")
-        elif state == 6:
-            sys.exit(pa_context_errno(c))
+        elif state in (5, 6):
+            self.error = RuntimeError("Failed to complete action: {}, {}"
+                                      .format(state, pa_context_errno(c)))
+            self.complete_action()
         return 0
 
     def _cb(func):
@@ -1018,10 +1019,14 @@ class Pulse():
         self.iterate()
 
     def run(self):
+        if self.error:
+            raise self.error
         self.ret = pointer(c_int(0))
         pa_mainloop_run(self.mainloop, self.ret)
 
     def iterate(self, times=1, start=True):
+        if self.error:
+            raise self.error
         start and self.start_action()
         self.ret = pointer(c_int())
         pa_mainloop_iterate(self.mainloop, times, self.ret)
