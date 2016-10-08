@@ -1773,7 +1773,7 @@ def main():
         sys.exit("ERR: {}".format(err))
     assert args == [], sys.exit('ERR: {} not not recognized'.format(' '.join(args).strip()))
 
-    print('\033]2;PulseAudio Mixer\007')
+    print('\033]2;PulseAudio Mixer\007', end='', flush=True)
 
     dopts = dict(opts)
     server = dopts.get('--server', '').encode() or None
